@@ -43,6 +43,7 @@ class MasterBlaster(arcade.Window):
         self.walk = None
         #change in time to determine footstep audio playing
         self.sound_distance = None
+        self.dontworryaboutthis = None
         #prepate a spot for the physics engine
         self.physics_engine = None
 
@@ -60,6 +61,7 @@ class MasterBlaster(arcade.Window):
         self.bullet_list = arcade.SpriteList() 
         self.gunshot = arcade.sound.load_sound("sprites/audio/sadpew.wav")
         self.walking = arcade.sound.load_sound("sprites/audio/footstep.wav")
+        self.dontworryaboutthis = arcade.load_sound("sprites/audio/fart.wav")
         self.sound_distance = 0
         self.walk = False
         #Set up the player
@@ -129,19 +131,49 @@ class MasterBlaster(arcade.Window):
         
         #print("pew") #debug statement
         #play audio for bullet
-        arcade.sound.play_sound(self.gunshot)
-        bullet = arcade.Sprite("sprites/battle/ammo.png", 1)
-
-        #if facing right start at right side of character png and set bullet travel direction
-        if(self.facing == "right"):
-            bullet.direction = "right"
-            bullet.center_x = self.player_sprite.center_x + 57
+        if  ((self.player_sprite._get_texture() in self.player_sprite.stand_left_textures or
+            self.player_sprite._get_texture() in self.player_sprite.walk_left_textures)
+            and  self.facing == "right"):
+            arcade.sound.play_sound(self.dontworryaboutthis)
+            bullet = arcade.Sprite("sprites/character/gas.png", 0.015)
+            #if facing right start at right side of character png and set bullet travel direction
+            if(self.facing == "right"):
+                bullet.direction = "right"
+                bullet.center_x = self.player_sprite.center_x + 23
+            else:
+                #start left side of character png and set bullet travel direction
+                bullet.direction = "left"
+                bullet.center_x = self.player_sprite.center_x - 23
+            bullet.center_y = self.player_sprite.center_y - 20
+        elif ((self.player_sprite._get_texture() in self.player_sprite.stand_right_textures or
+            self.player_sprite._get_texture() in self.player_sprite.walk_right_textures)
+            and  self.facing == "left"):
+            arcade.sound.play_sound(self.dontworryaboutthis)
+            bullet = arcade.Sprite("sprites/character/gas.png", 0.015)
+            #if facing right start at right side of character png and set bullet travel direction
+            if(self.facing == "right"):
+                bullet.direction = "right"
+                bullet.center_x = self.player_sprite.center_x + 23
+            else:
+                #start left side of character png and set bullet travel direction
+                bullet.direction = "left"
+                bullet.center_x = self.player_sprite.center_x - 23
+            bullet.center_y = self.player_sprite.center_y - 20
         else:
-            #start left side of character png and set bullet travel direction
-            bullet.direction = "left"
-            bullet.center_x = self.player_sprite.center_x - 57
+            arcade.sound.play_sound(self.gunshot)
+            bullet = arcade.Sprite("sprites/battle/ammo.png", 1)
+            #if facing right start at right side of character png and set bullet travel direction
+            if(self.facing == "right"):
+                bullet.direction = "right"
+                bullet.center_x = self.player_sprite.center_x + 46
+            else:
+                #start left side of character png and set bullet travel direction
+                bullet.direction = "left"
+                bullet.center_x = self.player_sprite.center_x - 46
+            
+            bullet.center_y = self.player_sprite.center_y - 3
+
         
-        bullet.center_y = self.player_sprite.center_y - 3
 
         self.bullet_list.append(bullet)
 
@@ -191,10 +223,15 @@ class MasterBlaster(arcade.Window):
         #for each frame add one to time between footstep audio
         self.sound_distance += 1
         #update all sprites
+        #print(self.player_sprite._get_texture())
         self.update_bullets()
         self.player_list.update()
         self.player_list.update_animation()
         self.physics_engine.update()
+        if self.player_sprite.center_x >= SCREEN_WIDTH:
+            self.player_sprite.center_x = 10
+        elif self.player_sprite.center_x <= 0:
+            self.player_sprite.center_x = SCREEN_WIDTH - 10
         
 
     #render screen
