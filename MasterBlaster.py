@@ -11,8 +11,8 @@ CHARACTER_SCALING = 1
 TILE_SCALING = 0.5
 COIN_SCALING = 0.5
 PLAYER_MOVEMENT_SPEED = 3
-GRAVITY = 0.38
-PLAYER_JUMP_SPEED = 9.8
+GRAVITY = 0.1
+PLAYER_JUMP_SPEED = 4
 
 #class to represent the game application
 #inherit from arcade.Window
@@ -30,6 +30,7 @@ class MasterBlaster(arcade.Window):
         self.wall_list = None
         self.player_list = None
         self.bullet_list = None
+        self.sound_track = None
         #Variable for the players sprite
         self.player_sprite = None
 
@@ -47,6 +48,8 @@ class MasterBlaster(arcade.Window):
         #prepate a spot for the physics engine
         self.physics_engine = None
 
+        self.multipress = None
+
         #set a background color for the window
         arcade.set_background_color(arcade.csscolor.INDIANRED)
 
@@ -60,10 +63,13 @@ class MasterBlaster(arcade.Window):
         self.objective_list = arcade.SpriteList()
         self.bullet_list = arcade.SpriteList() 
         self.gunshot = arcade.sound.load_sound("sprites/audio/sadpew.wav")
-        self.walking = arcade.sound.load_sound("sprites/audio/footstep.wav")
+        self.walking = arcade.sound.load_sound("sprites/audio/softerstep.wav")
         self.dontworryaboutthis = arcade.load_sound("sprites/audio/fart.wav")
+        self.current_song = arcade.load_sound("sprites/audio/EndlessQuiet.wav")
+        arcade.play_sound(self.current_song)
         self.sound_distance = 0
         self.walk = False
+        self.multipress = False
         #Set up the player
         self.facing = "right"
         self.player_sprite = arcade.AnimatedWalkingSprite()
@@ -93,7 +99,7 @@ class MasterBlaster(arcade.Window):
         self.player_sprite.walk_left_textures.append(arcade.load_texture("sprites/character/rWalking.png",
                                                                   scale=CHARACTER_SCALING, mirrored=True))
 
-        self.player_sprite.texture_change_distance = 42
+        self.player_sprite.texture_change_distance = 48
 
         #Create the groud
         ground = arcade.Sprite("sprites/environ/marsDirt.png", TILE_SCALING)
@@ -108,18 +114,7 @@ class MasterBlaster(arcade.Window):
         ground.center_x = 3*(SCREEN_WIDTH/4)
         ground.center_y = 96
         self.wall_list.append(ground)
-        ground = arcade.Sprite("sprites/environ/marsDirt.png", TILE_SCALING)
-        ground.center_x = 3*(SCREEN_WIDTH/4)
-        ground.center_y = 160
-        self.wall_list.append(ground)
-        ground = arcade.Sprite("sprites/environ/marsDirt.png", TILE_SCALING)
-        ground.center_x = 3*(SCREEN_WIDTH/4)
-        ground.center_y = 224
-        self.wall_list.append(ground)
-        ground = arcade.Sprite("sprites/environ/marsDirt.png", TILE_SCALING)
-        ground.center_x = 2*(SCREEN_WIDTH/4)
-        ground.center_y = 288
-        self.wall_list.append(ground)
+
 
         #add physics engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(self.player_sprite,
@@ -127,7 +122,7 @@ class MasterBlaster(arcade.Window):
                                                              GRAVITY)
     
     #method to handle shooting bullets
-    def on_space_press(self):
+    def on_shoot(self):
         
         #print("pew") #debug statement
         #play audio for bullet
@@ -165,13 +160,13 @@ class MasterBlaster(arcade.Window):
             #if facing right start at right side of character png and set bullet travel direction
             if(self.facing == "right"):
                 bullet.direction = "right"
-                bullet.center_x = self.player_sprite.center_x + 46
+                bullet.center_x = self.player_sprite.center_x + 40
             else:
                 #start left side of character png and set bullet travel direction
                 bullet.direction = "left"
-                bullet.center_x = self.player_sprite.center_x - 46
+                bullet.center_x = self.player_sprite.center_x - 40
             
-            bullet.center_y = self.player_sprite.center_y - 3
+            bullet.center_y = self.player_sprite.center_y
 
         
 
@@ -190,30 +185,44 @@ class MasterBlaster(arcade.Window):
         """Called whenever a key is pressed. """
 
         #check if physics is active for jumping
+        
         if key == arcade.key.UP or key == arcade.key.W:
             if self.physics_engine.can_jump():
                 self.player_sprite.change_y = PLAYER_JUMP_SPEED
-        elif key == arcade.key.LEFT or key == arcade.key.A:
+                        
+        if key == arcade.key.LEFT or key == arcade.key.A:
+            if(self.player_sprite.change_x is not 0):
+                self.player_sprite.change_x = 0
+                self.multipress = True
             self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
             self.facing = "left"
             self.walk = True
         elif key == arcade.key.RIGHT or key == arcade.key.D:
+            if(self.player_sprite.change_x is not 0):
+                self.player_sprite.change_x = 0
+                self.multipress = True
             self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
             self.facing = "right"
             self.walk = True
-        elif key == arcade.key.SPACE:
+        elif key == arcade.key.ENTER or key == arcade.key.SPACE:
             #call shoot method
-            self.on_space_press()
+            self.on_shoot()
+        elif key == arcade.key.ESCAPE:
+            arcade.close_window()
+
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key. """
-
-        if key == arcade.key.LEFT or key == arcade.key.A:
-            self.player_sprite.change_x = 0
-            self.walk = False
-        elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.walk = False
-            self.player_sprite.change_x = 0
+        if self.multipress == True:
+            self.multipress = False
+        else:
+            if key == arcade.key.LEFT or key == arcade.key.A:
+                self.player_sprite.change_x = 0
+                self.walk = False
+            elif key == arcade.key.RIGHT or key == arcade.key.D:
+                self.walk = False
+                self.player_sprite.change_x = 0
+                
 
     def update(self, delta_time):
         """ Movement and game logic """
