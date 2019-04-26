@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="2019.04.25" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="128" tileheight="128" infinite="0" backgroundcolor="#c88585" nextlayerid="14" nextobjectid="1">
+ <tileset firstgid="1" name="temp" tilewidth="128" tileheight="128" tilecount="2" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="dirt.jpg"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="rock.jpg"/>
+  </tile>
+ </tileset>
+ <layer id="8" name="Tile Layer 1" width="100" height="100">
+  <data encoding="base64" compression="zlib">
+   eJzt1kkOgzAQAEHI/x+dEyiKwDsMS5XkW2KQ2ximCQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGLM0TfAap70uIqlxSf6Rlg7LIM4v8+FHnG2OugRZ6+FHudLtdCjTc93qR5jzBUjN48efVLv362RapX771uU7t+t39e06B1PkTo7Ws6UMxs8qUdqD6fWda9LZIu79+g9T/57RLc4qsfeWTF6/hE9ot4TpXuk16jvwpL5otfuiBYjepTM0XLdlvfCnUdqXWrWK7e+tdfNPQNv6lF6rpSeQSXXrT2Tnt7DuM7gWr59sgSy
+  </data>
+ </layer>
+</map>
