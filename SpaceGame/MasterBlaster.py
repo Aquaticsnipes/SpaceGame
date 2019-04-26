@@ -1,3 +1,5 @@
+#created by 
+#Adam A and Chris S
 import arcade
 #import pygame
 import os
@@ -15,7 +17,7 @@ COIN_SCALING = 0.5
 PLAYER_MOVEMENT_SPEED = 3
 GRAVITY = 0.1
 PLAYER_JUMP_SPEED = 5.5
-ENEMY_BOB_SPEED = 10
+#ENEMY_BOB_SPEED = 10
 HIGH_SCORE = None
 BULLET_DAMAGE = 55
 TEXTURE_LEFT = 0
@@ -42,7 +44,7 @@ class Enemy(arcade.Sprite):
         texture = arcade.load_texture("sprites/character/alienFLeft.png", mirrored=True, scale=CHARACTER_SCALING)
         self.textures.append(texture)
         self.health = h
-        # By default, face right.
+        #This default is overwritten by the travel direction anyways
         self.set_texture(random.randint(0,1))
         
 
@@ -93,7 +95,7 @@ class MasterBlaster(arcade.Window):
                             1:"burst"
                         }
         self.mode = 0
-        self.timer = 0
+        #self.timer = 0
         #audio for bullets
         self.gunshot = None
         self.score = None
@@ -148,6 +150,7 @@ class MasterBlaster(arcade.Window):
         self.player_sprite.center_y = 200
         self.player_list.append(self.player_sprite)
 
+        #Arrays of Player textures to used by the arcade.AnimatedWalkingSprite class
         self.player_sprite.stand_right_textures = []
         self.player_sprite.stand_right_textures.append(arcade.load_texture("sprites/character/rFacing.png",
                                                                     scale=CHARACTER_SCALING))
@@ -244,6 +247,7 @@ class MasterBlaster(arcade.Window):
             if bullet.center_x < self.player_sprite.center_x - 1280 or bullet.center_x > self.player_sprite.center_x + 1280:
                 bullet.remove_from_sprite_lists()
 
+    #for weapon select fire mode (future implementation)
     def switch_firemode(self):
         if self.mode == 0:
             self.mode = 1
@@ -255,11 +259,11 @@ class MasterBlaster(arcade.Window):
         """Called whenever a key is pressed. """
 
         #check if physics is active for jumping
-        
         if key == arcade.key.UP or key == arcade.key.W:
             if self.physics_engine.can_jump():
                 self.player_sprite.change_y = PLAYER_JUMP_SPEED
-                        
+        
+        #handle player input
         if key == arcade.key.LEFT or key == arcade.key.A:
             if(self.player_sprite.change_x is not 0):
                 self.player_sprite.change_x = 0
@@ -305,15 +309,15 @@ class MasterBlaster(arcade.Window):
         self.sound_distance += 1
         self.bob_count += 1
         self.canHurt += 1
-        self.timer += 1
+        #self.timer += 1
         #update all sprites
         #print(self.player_sprite._get_texture())
         self.update_bullets()
         self.player_list.update()
         self.player_list.update_animation()
         self.physics_engine.update()
-        if self.bob_count > ENEMY_BOB_SPEED:
-            self.enemy_list.update()
+        #if self.bob_count > ENEMY_BOB_SPEED:
+        #    self.enemy_list.update()
 
         changed = False
 
@@ -341,31 +345,35 @@ class MasterBlaster(arcade.Window):
         	self.veiw_bottom -= bottom_boundry - self.player_sprite.bottom
         	changed = True
 
-
-
         #scroll action
         if changed:
         	self.veiw_left = int(self.veiw_left)
         	self.bottom = int(self.veiw_bottom)
-
         	arcade.set_viewport(self.veiw_left, SCREEN_WIDTH + self.veiw_left, self.veiw_bottom, SCREEN_HEIGHT + self.veiw_bottom)
 
+        #boundry checking for player to stay on the map
         if self.player_sprite.center_x >= 5766:
-            self.player_sprite.center_x = 62
+            self.player_sprite.center_x = 75
             self.player_sprite.center_y = 200
         elif self.player_sprite.center_x <= 62:
-            self.player_sprite.center_x = 5766
+            self.player_sprite.center_x = 5750
             self.player_sprite.center_y = 840
         if self.player_sprite.center_y <= 0:
             self.player_sprite.center_x = 64
             self.player_sprite.center_y = 200
 
+        #loop through list of enemies
         for alien in self.enemy_list:
+
+            #first check to see if aliens are 150 picels or further off any side of the screen
+            #if so remove them
             if alien.center_x < self.veiw_left - 150 or alien.center_x > self.veiw_left + SCREEN_WIDTH + 150:
                 alien.remove_from_sprite_lists()
             elif alien.center_y < self.veiw_bottom - 150 or alien.center_y > self.veiw_bottom + SCREEN_HEIGHT+ 150:
                 alien.remove_from_sprite_lists()
             else:
+                #determine movement for enemies
+                #currently a direct path towards player 
                 if alien.center_x > self.player_sprite.center_x + 1:
                     alien.change_x = -1
                     alien.set_texture(TEXTURE_LEFT)
@@ -374,36 +382,55 @@ class MasterBlaster(arcade.Window):
                     alien.set_texture(TEXTURE_RIGHT)
                 else:
                     alien.set_texture(TEXTURE_RIGHT)
-
                 
                 if alien.center_y > self.player_sprite.center_y:
-                    alien.change_y = -0.3
+                    alien.change_y = -0.7
                 elif alien.center_y < self.player_sprite.center_y:
-                    alien.change_y = 0.3
+                    alien.change_y = 0.7
         
+        #check if player touches an enemy
         if arcade.check_for_collision_with_list(self.player_sprite, self.enemy_list):
-            self.player_sprite.health -= 1
+            #one damage to player per frame that the model is touching the enemy
+            self.player_sprite.health -= 0.5
             if self.canHurt > 20:
+                #only play audio for getting hurt every 20 frames.
+                #about every 1/3 of a second
                 arcade.sound.play_sound(self.hurt)
                 self.canHurt = 0
+            #if players health falls below 0, start a new round
             if self.player_sprite.health <= 0:
                 self.player_sprite.remove_from_sprite_lists()
                 self.setup()
 
+        #keep track of high score
         if self.score > HIGH_SCORE:
             HIGH_SCORE = self.score
 
+        #call method to spawn enemies if necessary
         self.enemy_spawner()
+
+        #check all the bullets in the list
         for bullet in self.bullet_list:
+            #if bullet hits a wall get rid of the bullet
             if arcade.check_for_collision_with_list(bullet, self.wall_list):
                 bullet.remove_from_sprite_lists()
             else:
+                #check the bullet against each enemy
                 for enemy in self.enemy_list:
                     if arcade.check_for_collision(bullet, enemy):
                         arcade.play_sound(self.enemy_hit)
+                        #damage fallow, subtracts 5% damage reduced per pixel travelled
                         dmg = BULLET_DAMAGE - (abs(bullet.start_x - bullet.center_x) * 0.05)
+
+                        if dmg < 0:
+                            dmg = 0
+                        
+                        #get rid of bullet on impact with enemy
                         bullet.remove_from_sprite_lists()
+                        #deal damage to enemy
                         enemy.health -= dmg
+                    #if the enemies health falls below 0 get rid of the enemy
+                    #add 10 points to players score
                     if enemy.health <= 0:
                         enemy.remove_from_sprite_lists()
                         self.score += 10
@@ -427,22 +454,22 @@ class MasterBlaster(arcade.Window):
         
         #print(self.player_sprite.center_x, self.player_sprite.center_y)
 
+        #Output for any text that needs to be displayed to the game
         output = f"High Score : {HIGH_SCORE}"
         arcade.draw_text(output, self.veiw_left + 10, self.veiw_bottom + (SCREEN_HEIGHT - 20), arcade.color.WHITE, 16)
-
-
         output = f"Current Score : {self.score}"
         arcade.draw_text(output, self.veiw_left + 10, self.veiw_bottom + (SCREEN_HEIGHT - 40), arcade.color.WHITE, 16)
-        
         #output = f"Fire Mode : {self.firemode[self.mode]}"
         #arcade.draw_text(output, 10, 40, arcade.color.WHITE, 16)
-
         output = f"{self.player_sprite.health:.3g}%"
         arcade.draw_text(output, self.player_sprite.center_x - 25, self.player_sprite._get_top() + 2, arcade.color.WHITE, 16)
 
 
 #main method to initialize the window
 def main(): 
+
+    #read in high score from save file,
+    #or set high score to 0 if no save data available
     global HIGH_SCORE
     try:
         file = open("save.txt", "r")
@@ -457,9 +484,12 @@ def main():
         HIGH_SCORE = 0
     file.close()
     
+    #run the game
     window = MasterBlaster()
     window.setup()
     arcade.run()
+
+    #save the high score to the file when the game ends
     file = open("save.txt", "w")
     file.write(str(HIGH_SCORE))
     window.close()
@@ -468,4 +498,3 @@ def main():
 #programs main, only method to run when program executes
 if __name__ == "__main__":
     main()
-
